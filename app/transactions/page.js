@@ -2,6 +2,8 @@
   import { useEffect, useState } from 'react'
   import { supabase } from '@/lib/supabase'
   import { useRouter } from 'next/navigation'
+  import Papa from 'papaparse'
+  
 
   export default function Transactions() {
     const [amount, setAmount] = useState('')
@@ -68,6 +70,41 @@
       if (!error) fetchTransactions()
     }
 
+     const handleCSVUpload = async (e) => {
+      const file = e.target.files[0]
+      if (!file) return
+
+      const { data: userData } = await supabase.auth.getUser()
+      if (!userData.user) {
+        router.push('/login')
+        return
+      }
+
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: async (results) => {
+          const rows = results.data.map((row) => ({
+            user_id: userData.user.id,
+            amount: parseFloat(row.amount),
+            type: row.type,
+            category: row.category,
+            description: row.description || '',
+            date: row.date,
+          }))
+
+          const { error } = await supabase.from('transactions').insert(rows)
+
+          if (error) {
+            setMessage('CSV import failed: ' + error.message)
+          } else {
+            setMessage(`${rows.length} transactions imported successfully!`)
+            fetchTransactions()
+          }
+        },
+      })
+    }
+
     return (
       <div style={{ padding: '20px' }}>
         <h1>Add Transaction</h1>
@@ -87,6 +124,8 @@
 
           <button type="submit">Add Transaction</button>
         </form>
+        <h2>Or Import from CSV</h2>
+        <input type="file" accept=".csv" onChange={handleCSVUpload} />
         <p>{message}</p>
 
         <h2>Your Transactions</h2>
