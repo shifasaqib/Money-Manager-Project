@@ -165,6 +165,7 @@
           <a href="/transactions" style={styles.link}>Manage Transactions</a>
           <a href="/budgets" style={styles.link}>Manage Budgets</a>
           <a href="/goals" style={styles.link}>Manage Goals</a>
+          <a href="/insights" style={styles.link}>AI Insights</a>
         </div>
       </div>
     )
